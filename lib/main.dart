@@ -1,12 +1,24 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:provaprogetto/user.dart';
+import 'objectbox.g.dart';
 import 'secondPage.dart';
 
+
+
+
 void main() {
+
+
+  WidgetsFlutterBinding.ensureInitialized();
+  //l'app non esiste
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
+
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +34,7 @@ class MyApp extends StatelessWidget {
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key, required this.title}) : super(key: key);
-  final String title;
+  final String title; 
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -32,16 +44,36 @@ class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
   String? testo;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
+  bool hasBeenInitialized=false;
+  late Store _store;
 
   final controller = TextEditingController();
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
 
+  @override
+    void initState() {
+    super.initState();
+
+    openStore().then((Store store) {
+      _store = store;
+      if(_store!=null) {
+        setState(() {
+          hasBeenInitialized = true;
+        });
+      }
+    });
+  }
+
+  void _incrementCounter() {
+
+    List<User> lista=_store.box<User>().getAll();
+    setState(() {
+      _counter=lista.length;
+    });
     //_counter++;
+    for(var user in lista){
+      print("email: ${user.email},pass: ${user.password}, id:${user.id}");
+    }
     print("-----------------contatore :$_counter");
   }
 
@@ -64,7 +96,11 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Colors.green,
         title: Text(widget.title),
       ),
-      body: Center(
+      body:!hasBeenInitialized?
+          Center(
+            child: CircularProgressIndicator(),
+          )
+          : Center(
         // Center is a layout widget. It takes a single child and positions it
         // in the middle of the parent.
         child: Container(
@@ -134,6 +170,19 @@ class _MyHomePageState extends State<MyHomePage> {
                 _counter.toString(),
                 style: Theme.of(context).textTheme.headline4,
               ),
+
+              IconButton(
+                color: Colors.red,
+                onPressed:(){
+                  User peppe=User(email: "prova2@gmail.com", password: "Pass");
+                  var rng = Random();
+                  peppe.id= 4;//rng.nextInt(5);
+                  _store.box<User>().remove(7);
+                  _incrementCounter();
+
+                  } ,
+                icon: Icon(Icons.edit),
+              )
             ],
           ),
         ),
@@ -141,13 +190,19 @@ class _MyHomePageState extends State<MyHomePage> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: testo == null || testo =="" ? Colors.blue : Colors.green,
         onPressed: () {
-          if(_formKey.currentState!.validate())
+         /* if(_formKey.currentState!.validate())
                 Navigator.push(
                     context,
                     MaterialPageRoute(
                         builder: (context) => SecondPage(
                               title: testo!,
-                            )));
+                            )));*/
+                User peppe=User(email: "prova@gmail.com", password: "Pass");
+                var rng = Random();
+                peppe.id= 0;//rng.nextInt(10);
+                int id=_store.box<User>().put(peppe);
+                _incrementCounter();
+
               },
         tooltip: 'Increment',
         child: Icon(
